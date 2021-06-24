@@ -11,12 +11,17 @@ docker run -d \
 fightinggg/cpp-dev-env \
 bash -c "while true; do sleep 100; done;"
 ```
-## second. enjoy your self in project
+## second. enjoy yourself in project
 ```sh
 mkdir build && cd build && cmake .. && make && cd ..
 ./build/pcc
 ```
 
 # How To Use
+```sh
+docker run -it fightinggg/pcc bash
+# enjoy yourself
+pcc
+```
 
 
