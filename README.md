@@ -6,7 +6,9 @@ pcc 编译器
 docker run -d \
 --net host \
 --privileged  \
--v  $HOME/src:/root/src \
+-v $HOME/src:/root/src \
+-v $HOME/.ssh:/root/.ssh \
+-v $HOME/.gitconfig:/root/.gitconfig \
 --name cpp-dev-env \
 fightinggg/cpp-dev-env \
 bash -c "while true; do sleep 100; done;"

@@ -1,4 +1,4 @@
-
+#include "nfa.h"
 
 /**
  *  key: [ ] ( ) * \
@@ -10,3 +10,4 @@ struct reg_lite_token {
 
 void regLiteParse(char* code);
 
+void lexical_analysis(char* code);
