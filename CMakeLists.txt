@@ -3,6 +3,7 @@ project(pcc)
 
 set(SRC
         src/main.cpp
+        src/regex_lite.hpp
         src/nfa.hpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")

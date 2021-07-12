@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <ostream>
 #include <stack>
 #include <unordered_set>
@@ -8,39 +9,25 @@
 using namespace std;
 
 class nfa {
-private:
+public:
+    const static int EMPTY_TRANS;
+
     class node {
     private:
-        int type;
+        bool is_end;
         unordered_map<int, vector<node *>> trans;
 
     public:
-        const static int EMPTY_TRANS = 0;
-
-        const static int START_NODE_TYPE = 1;
-        const static int NORMAL_NODE_TYPE = 2;
-        const static int END_NODE_TYPE = 4;
-
         node() = delete;
 
-        explicit node(int type) : type(type) {}
+        explicit node(bool is_end) : is_end(is_end) {}
 
-        bool isType(int type) {
-            return this->type & type;
+        bool isEnd() const {
+            return is_end;
         }
 
-        int getType() {
-            return type;
-        }
-
-        void setType(int type) {
-            this->type |= type;
-        }
-
-        void removeType(int type) {
-            if (isType(type)) {
-                this->type ^= type;
-            }
+        void setIsEnd(bool isEnd) {
+            is_end = isEnd;
         }
 
         unordered_map<int, vector<node *>> &getTrans() {
@@ -53,16 +40,46 @@ private:
 
     };
 
+private:
+
     node *start{};
     unordered_set<node *> end;
 
     void initWithoutDelete(int edge) {
-        node *from = new node(node::START_NODE_TYPE);
-        node *to = new node(node::END_NODE_TYPE);
+        node *from = new node(false);
+        node *to = new node(true);
         start = from;
         start->getTrans()[edge].push_back(to);
         end.clear();
         end.insert(to);
+    }
+
+    void delete_all() {
+        for (auto nd:allNode()) {
+            delete nd;
+        }
+    }
+
+    void copy_from(const nfa &fa) {
+        unordered_map<node *, node *> mp;
+        for (auto nd:fa.allNode()) {
+            mp[nd] = new node(nd->isEnd());
+        }
+        for (auto it:mp) {
+            node *old = it.first;
+            node *nw = it.second;
+            for (auto[edge, toList]:old->getTrans()) {
+                for (auto to:toList) {
+                    nw->getTrans()[edge].push_back(mp[to]);
+                }
+            }
+        }
+
+        start = mp[fa.start];
+        end.clear();
+        for (node *nd:fa.end) {
+            end.insert(mp[nd]);
+        }
     }
 
 public:
@@ -76,41 +93,18 @@ public:
      */
     explicit nfa(int edge) { initWithoutDelete(edge); }
 
-    nfa(const nfa &fa) {
-        unordered_map<node *, node *> mp;
-        auto makeAvliable = [&mp](node *old) {
-            if (mp.find(old) == mp.end()) {
-                return mp.find(old)->second;
-            } else {
-                return mp[old] = new node(old->getType());
-            }
-        };
-        stack<node *> stk;
-        stk.push(start);
+    nfa(const nfa &fa) { copy_from(fa); }
 
-        unordered_set<node *> se;
-        while (!stk.empty()) {
-            node *top = stk.top();
-            stk.pop();
-            if (se.find(top) != se.end()) { continue; }
-            se.insert(top);
-            node *nw = makeAvliable(top);
-
-            for (const auto &item: top->getTrans()) {
-                for (node *son:item.second) {
-                    stk.push(son);
-                    nw->getTrans()[item.first].push_back(makeAvliable(son));
-                }
-            }
-        }
-
-        start = makeAvliable(start);
-        for (node *nd:fa.end) {
-            end.insert(makeAvliable(nd));
-        }
+    nfa &operator=(const nfa &fa) {
+        delete_all();
+        copy_from(fa);
+        return *this;
     }
 
-    ~nfa() {
+    ~nfa() { delete_all(); }
+
+
+    vector<node *> allNode() const {
         stack<node *> stk;
         stk.push(start);
 
@@ -126,26 +120,35 @@ public:
                 }
             }
         }
-
-        for (auto nd:se) {
-            delete nd;
-        }
+        return vector<node *>(se.begin(), se.end());
     }
-
 
     void selfLoop() {
         for (auto ed:end) {
-            ed->getTrans()[node::EMPTY_TRANS].push_back(start);
+            ed->getTrans()[EMPTY_TRANS].push_back(start);
         }
     }
 
     void tandem(nfa &fa) {
         for (auto ed:end) {
-            ed->getTrans()[node::EMPTY_TRANS].push_back(fa.start);
+            ed->getTrans()[EMPTY_TRANS].push_back(fa.start);
+            ed->setIsEnd(false);
         }
         swap(end, fa.end);
+        fa.initWithoutDelete(EMPTY_TRANS);
+    }
+
+    void parallel(nfa &fa) {
+        start->getTrans()[EMPTY_TRANS].push_back(fa.start);
+        end.merge(fa.end);
+        assert(fa.end.empty());
+        fa.initWithoutDelete(EMPTY_TRANS);
     }
 
 };
+
+const int nfa::EMPTY_TRANS = 0;
+
+
 
 
