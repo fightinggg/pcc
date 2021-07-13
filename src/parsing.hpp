@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <string>
 
 /**
  * 产生式
@@ -19,6 +20,8 @@ struct grammar {
     map<int, string> raw;
     map<string, int> id;
     map<int, vector<production>> production_table;
+
+    int target; // 包含所有的文法
 };
 
 /**
@@ -36,15 +39,51 @@ struct syntax_tree {
 
 class parsing {
 public:
+    static syntax_tree dfs_parsing(const string &code, const grammar &gr) {
+        syntax_tree st{gr, {gr.target, "",}};
+        stack<int> stk;
+        stk.push(gr.target);
+        if (!_dfs_parsing(code, st, stk, 0)) {
+            exit(-1);
+        }
+        return st;
+    }
+
     /**
      * 递归下降算法
-     * @param code 代码
-     * @param gr 文法
-     * @return 语法🌲
+     * @return 语法树
      */
-    syntax_tree dfs_parsing(const string &code, const grammar &gr) {
-        for (char ch:code) {
-
+    static bool _dfs_parsing(const string &code, syntax_tree &st,
+                             stack<int> &productionMatch, int codeIndex) {
+        if (codeIndex == code.size()) {
+            return productionMatch.empty();
+        } else {
+            int firstProduction = productionMatch.top();
+            productionMatch.pop();
+            vector<production> expandProductionList = st.syntax_grammar.production_table[firstProduction];
+            bool match = false;
+            if (expandProductionList.empty()) {
+                if (st.syntax_grammar.raw[firstProduction].empty()) { // 空字符一定匹配
+                    match = _dfs_parsing(code, st, productionMatch, codeIndex);
+                } else if (code[codeIndex] == st.syntax_grammar.raw[firstProduction][0]) { // 非空
+                    match = _dfs_parsing(code, st, productionMatch, codeIndex + 1);
+                }
+            } else {
+                for (production &expand:expandProductionList) {
+                    for (int i = expand.derive.size() - 1; i >= 0; i--) {
+                        productionMatch.push(expand.derive[i]);
+                    }
+                    if (_dfs_parsing(code, st, productionMatch, codeIndex)) {
+                        match = true;
+                        break;
+                    }
+                    for (int i = expand.derive.size() - 1; i >= 0; i--) {
+                        productionMatch.pop();
+                    }
+                }
+            }
+            productionMatch.push(firstProduction);
+            return match;
         }
     }
 };

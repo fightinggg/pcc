@@ -7,14 +7,26 @@
 
 using namespace std;
 
+string code = "\n"
+              "#include<cstdio>\n"
+              "#include <iostream>\n"
+              "#include \"nfa.hpp\"\n"
+              "#include \"regex_lite.hpp\"\n"
+              "#include \"parsing.hpp\"\n"
+              "\n"
+              "using namespace std;\n"
+              "\n"
+              "string code = \"\"\n"
+              "\n"
+              "int main() {\n"
+              "    printf(\"hello pcc\\n\");\n"
+              "    parsing::_dfs_parsing(\"\");\n"
+              "\n"
+              "}";
+
 int main() {
     printf("hello pcc\n");
-    for (string s:regex_lite::regex_m2s("((abc*)|cde)*|123")) {
-        cout << s << " ";
-    }
-    int
-    a
-
-//    nfa fa = regex_lite::buildNfa("(123aabb)+[abcd]*d*");
+    grammar gr;
+    parsing::dfs_parsing(code, gr);
 
 }
